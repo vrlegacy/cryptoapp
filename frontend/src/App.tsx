@@ -24,17 +24,18 @@ export default function App() {
       <BrowserRouter>
         <Auth0Provider>
           <Routes>
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppShell />
-                </ProtectedRoute>
-              }
-            >
+            <Route element={<AppShell />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/gainers" element={<Gainers />} />
               <Route path="/trending" element={<Trending />} />
-              <Route path="/alerts" element={<Alerts />} />
+              <Route
+                path="/alerts"
+                element={
+                  <ProtectedRoute>
+                    <Alerts />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Routes>
         </Auth0Provider>

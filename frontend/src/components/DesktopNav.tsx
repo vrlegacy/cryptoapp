@@ -1,9 +1,12 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth0 } from '@auth0/auth0-react'
 import {
   ChartBarIcon,
   TrophyIcon,
   FireIcon,
   BellIcon,
+  ArrowRightStartOnRectangleIcon,
+  ArrowLeftEndOnRectangleIcon,
 } from '@heroicons/react/24/outline'
 import {
   ChartBarIcon as ChartBarSolid,
@@ -23,6 +26,8 @@ const tabs = [
  * Desktop sidebar navigation — visible only on lg+ screens.
  */
 export default function DesktopNav() {
+  const { isAuthenticated, user, loginWithRedirect, logout } = useAuth0()
+
   return (
     <aside
       className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 z-40 px-4 py-8"
@@ -72,9 +77,41 @@ export default function DesktopNav() {
         </ul>
       </nav>
 
-      {/* Footer */}
-      <div className="mt-auto px-3">
-        <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+      {/* User Auth Section */}
+      <div className="mt-auto px-3 space-y-3">
+        {isAuthenticated ? (
+          <div className="p-3 rounded-[var(--radius-md)] glass space-y-2">
+            <div className="flex items-center gap-2">
+              {user?.picture ? (
+                <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-[var(--accent-brand-dim)] flex items-center justify-center text-[10px] font-bold text-[var(--accent-brand)]">
+                  {user?.email?.slice(0, 2).toUpperCase() ?? 'U'}
+                </div>
+              )}
+              <span className="text-xs font-medium text-[var(--text-primary)] truncate">
+                {user?.email ?? user?.name}
+              </span>
+            </div>
+            <button
+              onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-semibold text-[var(--accent-down)] bg-[var(--accent-down-dim)] hover:opacity-90 transition-opacity"
+            >
+              <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+              Log Out
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => loginWithRedirect()}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-[var(--radius-md)] text-xs font-semibold text-[var(--text-primary)] bg-[var(--accent-brand-dim)] hover:bg-[var(--glass-fill)] transition-colors border border-[var(--accent-brand)]"
+          >
+            <ArrowLeftEndOnRectangleIcon className="w-4 h-4 text-[var(--accent-brand)]" />
+            Log In / Sign Up
+          </button>
+        )}
+
+        <p className="text-[10px] text-center" style={{ color: 'var(--text-muted)' }}>
           Not financial advice. Data may be delayed.
         </p>
       </div>

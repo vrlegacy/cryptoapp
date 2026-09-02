@@ -1,9 +1,10 @@
 services:
   # FastAPI web service
+  # Root directory on Render must be set to: backend
   - type: web
     name: cryptoapp-api
     runtime: python
-    rootDir: backend
+    pythonVersion: "3.12.0"
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -35,15 +36,38 @@ services:
       - key: CORS_ORIGINS
         sync: false
 
-  # Background worker — APScheduler (price sync, alert checks, news sync)
+  # Background worker — APScheduler
+  # Root directory on Render must be set to: backend
   - type: worker
     name: cryptoapp-worker
     runtime: python
-    rootDir: backend
+    pythonVersion: "3.12.0"
     buildCommand: pip install -r requirements.txt
     startCommand: python -m schedulers.worker
     envVars:
-      - fromGroup: cryptoapp-api  # inherits all env vars from web service
+      - key: AUTH0_DOMAIN
+        sync: false
+      - key: AUTH0_AUDIENCE
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: cryptoapp-redis
+          property: connectionString
+      - key: CRYPTOPANIC_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
 
   # Redis cache
   - type: redis

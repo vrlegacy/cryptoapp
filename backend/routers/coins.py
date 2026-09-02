@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy import select, desc, asc
-from sqlalchemy.ext.asyncio import AsyncSession
 import math
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import asc, desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.coingecko import coingecko_client
+from core.redis import get_json, set_json
 from db.database import get_db
 from db.models import Coin
 
@@ -20,32 +23,44 @@ async def get_coins(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Returns list of coins from database.
-    Default filtered to Binance-listed coins only.
+    Returns coin list.
+    Reads from Redis hot cache if available, falling back to PostgreSQL DB.
     """
-    query = select(Coin)
+    cache_key = "coins:binance" if binance_only else "coins:all"
+    cached_coins = await get_json(cache_key)
 
+    if cached_coins and isinstance(cached_coins, list) and not search:
+        # Filter and paginate from cache
+        coins_data = cached_coins
+        if sort_by:
+            reverse = order.lower() == "desc"
+            coins_data = sorted(
+                coins_data,
+                key=lambda c: c.get(sort_by) if c.get(sort_by) is not None else float("-inf" if reverse else "inf"),
+                reverse=reverse,
+            )
+        return coins_data[offset : offset + limit]
+
+    # Database Fallback
+    query = select(Coin)
     if binance_only:
         query = query.where(Coin.is_binance_listed.is_(True))
 
     if search:
-        search_pattern = f"%{search.lower()}%"
-        query = query.where(
-            (Coin.name.ilike(search_pattern)) | (Coin.symbol.ilike(search_pattern))
-        )
+        pattern = f"%{search.lower()}%"
+        query = query.where((Coin.name.ilike(pattern)) | (Coin.symbol.ilike(pattern)))
 
-    # Sorting logic
-    sort_column = getattr(Coin, sort_by, Coin.market_cap_rank)
+    sort_col = getattr(Coin, sort_by, Coin.market_cap_rank)
     if order.lower() == "desc":
-        query = query.order_by(desc(sort_column).nulls_last())
+        query = query.order_by(desc(sort_col).nulls_last())
     else:
-        query = query.order_by(asc(sort_column).nulls_last())
+        query = query.order_by(asc(sort_col).nulls_last())
 
     query = query.limit(limit).offset(offset)
     result = await db.execute(query)
     coins = result.scalars().all()
 
-    return [
+    formatted = [
         {
             "id": coin.id,
             "symbol": coin.symbol,
@@ -64,6 +79,8 @@ async def get_coins(
         }
         for coin in coins
     ]
+
+    return formatted
 
 
 @router.get("/gainers")
@@ -130,7 +147,6 @@ async def get_trending(
         result = await db.execute(query)
         coins = result.scalars().all()
     else:
-        # Volume-adjusted formula ranking
         query = query.where(
             Coin.price_change_percentage_24h.is_not(None),
             Coin.total_volume.is_not(None),
@@ -160,6 +176,26 @@ async def get_trending(
         }
         for coin in coins
     ]
+
+
+@router.get("/{coin_id}/history")
+async def get_coin_history(
+    coin_id: str,
+    days: int = Query(default=7, ge=1, le=365),
+):
+    """
+    Task 2.7 — Historical market chart price series for charting.
+    Cached in Redis for 15 minutes.
+    """
+    cache_key = f"coin:history:{coin_id}:{days}"
+    cached_history = await get_json(cache_key)
+    if cached_history:
+        return cached_history
+
+    history = await coingecko_client.fetch_coin_history(coin_id=coin_id, days=days)
+    if history:
+        await set_json(cache_key, history, ttl_seconds=900)  # 15-minute TTL
+    return history
 
 
 @router.get("/{coin_id}")

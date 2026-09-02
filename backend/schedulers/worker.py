@@ -1,19 +1,13 @@
 """
 Background worker entry point.
-APScheduler runs here — all scheduled jobs are registered in this file.
-The frontend NEVER calls external APIs directly; all external calls happen here.
-
-Sprint 2+ will add:
-  - price_sync_job (every 5 min)
-  - binance_listing_sync_job (daily)
-  - trending_sync_job (every 15 min)
-  - news_sync_job (every 15-30 min)
-  - alert_check_job (every 5 min, after price sync)
+APScheduler runs here — registers price and Binance listing sync jobs.
 """
+import asyncio
 import logging
-import time
 
 from apscheduler.schedulers.blocking import BlockingScheduler
+
+from schedulers.jobs import sync_binance_listings, sync_coin_prices
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -21,15 +15,32 @@ logger = logging.getLogger(__name__)
 scheduler = BlockingScheduler()
 
 
-def heartbeat():
-    """Placeholder job — replaced with real sync jobs in Sprint 2."""
-    logger.info("Worker heartbeat — scheduler running. Real jobs added Sprint 2+.")
+def run_sync_coin_prices():
+    logger.info("Executing scheduled sync_coin_prices job...")
+    asyncio.run(sync_coin_prices())
 
 
-scheduler.add_job(heartbeat, "interval", minutes=5, id="heartbeat")
+def run_sync_binance_listings():
+    logger.info("Executing scheduled sync_binance_listings job...")
+    asyncio.run(sync_binance_listings())
+
+
+# 1. Price sync every 5 minutes
+scheduler.add_job(run_sync_coin_prices, "interval", minutes=5, id="sync_coin_prices")
+
+# 2. Binance listing sync once a day
+scheduler.add_job(run_sync_binance_listings, "interval", hours=24, id="sync_binance_listings")
 
 if __name__ == "__main__":
     logger.info("Starting CryptoApp background worker...")
+    # Initial sync on worker startup
+    try:
+        logger.info("Running initial sync on startup...")
+        run_sync_coin_prices()
+        run_sync_binance_listings()
+    except Exception as exc:
+        logger.error(f"Error during initial worker sync: {exc}")
+
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):

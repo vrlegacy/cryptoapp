@@ -1,15 +1,18 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth0 } from '@auth0/auth0-react'
 import {
   ChartBarIcon,
   TrophyIcon,
   FireIcon,
   BellIcon,
+  UserIcon,
 } from '@heroicons/react/24/outline'
 import {
   ChartBarIcon as ChartBarSolid,
   TrophyIcon as TrophySolid,
   FireIcon as FireSolid,
   BellIcon as BellSolid,
+  UserIcon as UserSolid,
 } from '@heroicons/react/24/solid'
 
 const tabs = [
@@ -21,8 +24,11 @@ const tabs = [
 
 /**
  * Mobile bottom tab navigation — thumb-reachable, hidden on desktop (≥1024px).
+ * Includes user login/logout status toggle on mobile.
  */
 export default function BottomNav() {
+  const { isAuthenticated, loginWithRedirect, logout } = useAuth0()
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
@@ -63,6 +69,29 @@ export default function BottomNav() {
             </NavLink>
           </li>
         ))}
+
+        {/* Mobile Auth Button */}
+        <li className="flex-1">
+          {isAuthenticated ? (
+            <button
+              onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+              className="w-full flex flex-col items-center gap-0.5 py-2 px-3 rounded-[var(--radius-md)] text-[var(--accent-down)]"
+              aria-label="Log Out"
+            >
+              <UserSolid className="w-6 h-6" />
+              <span className="text-[10px] font-medium">Log Out</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => loginWithRedirect()}
+              className="w-full flex flex-col items-center gap-0.5 py-2 px-3 rounded-[var(--radius-md)] text-[var(--accent-brand)]"
+              aria-label="Log In"
+            >
+              <UserIcon className="w-6 h-6" />
+              <span className="text-[10px] font-medium">Log In</span>
+            </button>
+          )}
+        </li>
       </ul>
     </nav>
   )

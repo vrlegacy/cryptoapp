@@ -10,14 +10,20 @@ interface Auth0ProviderProps {
 export default function Auth0Provider({ children }: Auth0ProviderProps) {
   const navigate = useNavigate()
 
+  // Only include audience if specified to avoid "Service not found" errors when API is not registered yet
+  const authorizationParams: Record<string, string> = {
+    redirect_uri: window.location.origin,
+  }
+
+  if (config.auth0Audience && config.auth0Audience.trim() !== '') {
+    authorizationParams.audience = config.auth0Audience
+  }
+
   return (
     <Auth0ProviderLib
       domain={config.auth0Domain}
       clientId={config.auth0ClientId}
-      authorizationParams={{
-        redirect_uri: window.location.origin,
-        audience: config.auth0Audience,
-      }}
+      authorizationParams={authorizationParams}
       onRedirectCallback={(appState) => {
         navigate(appState?.returnTo ?? window.location.pathname)
       }}

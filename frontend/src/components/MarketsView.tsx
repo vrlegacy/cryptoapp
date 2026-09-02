@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth0 } from '@auth0/auth0-react'
 import CoinIcon from './CoinIcon'
-import { fetchCoins, type CoinData } from '@/api/client'
+import { fetchCoins, fetchWatchlist, toggleWatchlist, type CoinData } from '@/api/client'
 
 function formatPrice(price: number | null): string {
   if (price === null || price === undefined) return '—'
@@ -32,6 +33,8 @@ function ChangePill({ value }: { value: number | null }) {
 type SortKey = 'marketCap' | 'price' | 'change24h' | 'volume24h'
 
 export default function MarketsView() {
+  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0()
+  const queryClient = useQueryClient()
   const [binanceOnly, setBinanceOnly] = useState(true)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortKey>('marketCap')
@@ -40,6 +43,21 @@ export default function MarketsView() {
     queryKey: ['coins', binanceOnly, search],
     queryFn: () => fetchCoins(binanceOnly, search),
     refetchInterval: 60000,
+  })
+
+  const { data: watchlist = [] } = useQuery({
+    queryKey: ['watchlist'],
+    queryFn: () => fetchWatchlist(() => getAccessTokenSilently()),
+    enabled: isAuthenticated,
+  })
+
+  const watchlistSet = new Set(watchlist.map((c) => c.id))
+
+  const toggleMutation = useMutation({
+    mutationFn: (coinId: string) => toggleWatchlist(coinId, () => getAccessTokenSilently()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+    },
   })
 
   // Client-side sorting
@@ -125,7 +143,7 @@ export default function MarketsView() {
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="text-white/30 hover:text-white/60 transition-colors"
+            className="text-white/30 hover:text-white/60 transition-colors cursor-pointer"
           >
             ×
           </button>
@@ -189,53 +207,80 @@ export default function MarketsView() {
       {/* Coins List */}
       {!isLoading && !error && filtered.length > 0 && (
         <div className="space-y-2">
-          {filtered.map((coin, i) => (
-            <div
-              key={coin.id}
-              className="glass rounded-2xl p-3 flex items-center gap-3 hover:bg-white/[0.07] transition-colors cursor-pointer"
-            >
-              <span
-                className="mono text-xs w-5 text-right flex-shrink-0"
-                style={{ color: 'rgba(255,255,255,0.25)' }}
+          {filtered.map((coin, i) => {
+            const isStarred = watchlistSet.has(coin.id)
+            return (
+              <div
+                key={coin.id}
+                className="glass rounded-2xl p-3 flex items-center gap-3 hover:bg-white/[0.07] transition-colors"
               >
-                {i + 1}
-              </span>
+                <span
+                  className="mono text-xs w-5 text-right flex-shrink-0"
+                  style={{ color: 'rgba(255,255,255,0.25)' }}
+                >
+                  {i + 1}
+                </span>
 
-              <CoinIcon symbol={coin.symbol} image={coin.image} size={40} />
+                <CoinIcon symbol={coin.symbol} image={coin.image} size={40} />
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-white font-semibold text-sm uppercase">
-                    {coin.symbol}
-                  </span>
-                  {!coin.is_binance_listed && (
-                    <span
-                      className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                      style={{
-                        background: 'rgba(245,158,11,0.15)',
-                        color: '#fbbf24',
-                        border: '1px solid rgba(245,158,11,0.3)',
-                      }}
-                    >
-                      CG only
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white font-semibold text-sm uppercase">
+                      {coin.symbol}
                     </span>
-                  )}
+                    {!coin.is_binance_listed && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                        style={{
+                          background: 'rgba(245,158,11,0.15)',
+                          color: '#fbbf24',
+                          border: '1px solid rgba(245,158,11,0.3)',
+                        }}
+                      >
+                        CG only
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {coin.name}
+                  </p>
                 </div>
-                <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  {coin.name}
-                </p>
-              </div>
 
-              <div className="text-right flex-shrink-0">
-                <p className="mono text-white font-semibold text-sm">
-                  {formatPrice(coin.current_price)}
-                </p>
-                <div className="mt-0.5">
-                  <ChangePill value={coin.price_change_percentage_24h} />
+                <div className="text-right flex-shrink-0 mr-2">
+                  <p className="mono text-white font-semibold text-sm">
+                    {formatPrice(coin.current_price)}
+                  </p>
+                  <div className="mt-0.5 flex justify-end">
+                    <ChangePill value={coin.price_change_percentage_24h} />
+                  </div>
                 </div>
+
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) return loginWithRedirect()
+                    toggleMutation.mutate(coin.id)
+                  }}
+                  disabled={toggleMutation.isPending}
+                  className="p-2 rounded-full hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
+                  title={isStarred ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                >
+                  <svg
+                    className="w-5 h-5 transition-colors"
+                    fill={isStarred ? '#facc15' : 'none'}
+                    stroke={isStarred ? '#facc15' : 'rgba(255,255,255,0.3)'}
+                    viewBox="0 0 24 24"
+                    strokeWidth={isStarred ? 1 : 2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                    />
+                  </svg>
+                </button>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

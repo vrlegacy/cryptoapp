@@ -1,100 +1,58 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
 
-/* ─── Design Tokens ────────────────────────────────────────────────────── */
-:root {
-  /* Backgrounds */
-  --bg-base: #0B0E14;
-  --bg-elevated: #12161F;
-  --bg-surface: #1A1F2E;
-
-  /* Glass */
-  --glass-fill: rgba(255, 255, 255, 0.06);
-  --glass-fill-hover: rgba(255, 255, 255, 0.09);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-blur: blur(20px);
-
-  /* Accent */
-  --accent-up: #34D399;       /* gains — emerald */
-  --accent-up-dim: rgba(52, 211, 153, 0.15);
-  --accent-down: #F87171;     /* losses — soft red */
-  --accent-down-dim: rgba(248, 113, 113, 0.15);
-  --accent-brand: #6366F1;    /* brand violet */
-  --accent-brand-dim: rgba(99, 102, 241, 0.20);
-
-  /* Text */
-  --text-primary: #F5F6F8;
-  --text-secondary: rgba(245, 246, 248, 0.75);
-  --text-muted: rgba(245, 246, 248, 0.45);
-
-  /* Island */
-  --island-bg: rgba(18, 22, 31, 0.85);
-  --island-border: rgba(255, 255, 255, 0.10);
-  --island-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.06);
-
-  /* Spacing & Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-island: 30px;
-}
-
-/* ─── Base Reset ────────────────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-feature-settings: 'cv11', 'ss01';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  background-color: var(--bg-base);
-  color: var(--text-primary);
-  min-height: 100dvh;
-  overflow-x: hidden;
+  font-family: 'Outfit', ui-sans-serif, sans-serif;
+  background: #000;
+  color: #e2e8f0;
 }
 
-/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+* {
+  scrollbar-width: none;
+}
 
-/* ─── Glass Utility ─────────────────────────────────────────────────────── */
+*::-webkit-scrollbar {
+  display: none;
+}
+
 .glass {
-  background: var(--glass-fill);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.glass:hover {
-  background: var(--glass-fill-hover);
+.glass-md {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
-/* ─── Accent utilities ──────────────────────────────────────────────────── */
-.text-up   { color: var(--accent-up); }
-.text-down { color: var(--accent-down); }
-.bg-up     { background: var(--accent-up-dim); }
-.bg-down   { background: var(--accent-down-dim); }
-
-/* ─── Focus ring ────────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--accent-brand);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
+.glass-strong {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(48px) saturate(180%);
+  -webkit-backdrop-filter: blur(48px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* ─── Reduced Motion ────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* yellow accent shorthand */
+.btn-yellow {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+}
+
+.btn-yellow:hover {
+  background: rgba(250, 204, 21, 0.25);
 }

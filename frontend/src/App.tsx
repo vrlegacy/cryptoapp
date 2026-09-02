@@ -8,6 +8,7 @@ import Dashboard from '@/pages/Dashboard'
 import Gainers from '@/pages/Gainers'
 import Trending from '@/pages/Trending'
 import Alerts from '@/pages/Alerts'
+import WatchlistPage from '@/pages/WatchlistPage'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -25,11 +26,12 @@ export default function App() {
       <BrowserRouter>
         <Auth0Provider>
           <AuthSync />
-          <Routes>
-            <Route element={<AppShell />}>
+          <AppShell>
+            <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/gainers" element={<Gainers />} />
               <Route path="/trending" element={<Trending />} />
+              <Route path="/watchlist" element={<WatchlistPage />} />
               <Route
                 path="/alerts"
                 element={
@@ -38,8 +40,8 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-            </Route>
-          </Routes>
+            </Routes>
+          </AppShell>
         </Auth0Provider>
       </BrowserRouter>
     </QueryClientProvider>

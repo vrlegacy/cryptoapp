@@ -3,6 +3,7 @@ Background Sync Jobs.
 Executed periodically by APScheduler worker process.
 The frontend NEVER calls external APIs directly; all market data ingestion happens here.
 """
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -11,7 +12,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from core.coingecko import coingecko_client
 from core.redis import set_json
-from db.database import AsyncSessionLocal
+from db.database import _get_session_factory
 from db.models import Coin
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ async def sync_binance_listings():
         logger.warning("No Binance coin IDs fetched. Skipping update.")
         return
 
+    AsyncSessionLocal = _get_session_factory()
     async with AsyncSessionLocal() as session:
         try:
             # 1. Reset all coins to false first or update matched coins
@@ -67,6 +69,7 @@ async def sync_coin_prices():
     cached_coins_all = []
     cached_coins_binance = []
 
+    AsyncSessionLocal = _get_session_factory()
     async with AsyncSessionLocal() as session:
         try:
             # Fetch existing Binance listed flags to preserve them on upsert

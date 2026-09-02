@@ -67,3 +67,51 @@ export async function fetchAlerts(getToken: () => Promise<string>): Promise<Aler
   if (!res.ok) throw new Error(`Failed to fetch alerts: ${res.statusText}`)
   return res.json()
 }
+
+export async function createAlert(
+  data: { coin_id: string; target_price: number; direction: 'above' | 'below'; channel: 'telegram' | 'email' },
+  getToken: () => Promise<string>
+): Promise<AlertData> {
+  const token = await getToken()
+  const res = await fetch(new URL('/alerts', config.backendUrl).toString(), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error(`Failed to create alert: ${res.statusText}`)
+  return res.json()
+}
+
+export async function deleteAlert(alertId: string, getToken: () => Promise<string>): Promise<void> {
+  const token = await getToken()
+  const res = await fetch(new URL(`/alerts/${alertId}`, config.backendUrl).toString(), {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`Failed to delete alert: ${res.statusText}`)
+}
+
+export async function fetchWatchlist(getToken: () => Promise<string>): Promise<CoinData[]> {
+  const token = await getToken()
+  const res = await fetch(new URL('/users/watchlist', config.backendUrl).toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    if (res.status === 401) return [] // if unauthorized, return empty for safety
+    throw new Error(`Failed to fetch watchlist: ${res.statusText}`)
+  }
+  return res.json()
+}
+
+export async function toggleWatchlist(coinId: string, getToken: () => Promise<string>): Promise<{ action: 'added' | 'removed' }> {
+  const token = await getToken()
+  const res = await fetch(new URL(`/users/watchlist/${coinId}`, config.backendUrl).toString(), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`Failed to toggle watchlist: ${res.statusText}`)
+  return res.json()
+}

@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Auth0Provider from '@/auth/Auth0Provider'
 import ProtectedRoute from '@/auth/ProtectedRoute'
+import AuthSync from '@/auth/AuthSync'
 import AppShell from '@/layouts/AppShell'
 import Dashboard from '@/pages/Dashboard'
 import Gainers from '@/pages/Gainers'
@@ -23,6 +24,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Auth0Provider>
+          <AuthSync />
           <Routes>
             <Route element={<AppShell />}>
               <Route path="/" element={<Dashboard />} />

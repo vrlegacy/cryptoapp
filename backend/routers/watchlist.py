@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.auth import get_current_user
 from db.database import get_db
-from db.models import Watchlist, User, Coin
+from db.models import Coin, User, Watchlist
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 

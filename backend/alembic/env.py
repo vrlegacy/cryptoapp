@@ -12,8 +12,8 @@ from alembic import context
 # Allow imports from backend root
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from db.models import Base  # noqa: E402
 from core.config import settings  # noqa: E402
+from db.models import Base  # noqa: E402
 
 config = context.config
 

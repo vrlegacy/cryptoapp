@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
-from routers import health, users, coins, alerts, watchlist
+from routers import alerts, coins, health, users, watchlist
 
 app = FastAPI(
     title="CryptoApp API",

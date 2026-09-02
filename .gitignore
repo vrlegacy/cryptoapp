@@ -1,0 +1,39 @@
+# ─── Secrets ───────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Python / Backend ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Node / Frontend ───────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# ─── OS ────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

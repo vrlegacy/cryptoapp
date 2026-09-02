@@ -1,0 +1,52 @@
+services:
+  # FastAPI web service
+  - type: web
+    name: cryptoapp-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: AUTH0_DOMAIN
+        sync: false
+      - key: AUTH0_AUDIENCE
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: cryptoapp-redis
+          property: connectionString
+      - key: CRYPTOPANIC_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+  # Background worker — APScheduler (price sync, alert checks, news sync)
+  - type: worker
+    name: cryptoapp-worker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m schedulers.worker
+    envVars:
+      - fromGroup: cryptoapp-api  # inherits all env vars from web service
+
+  # Redis cache
+  - type: redis
+    name: cryptoapp-redis
+    ipAllowList: []
+    plan: free

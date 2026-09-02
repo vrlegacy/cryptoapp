@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     database_url: str = ""
 
     # Redis
-    redis_url: str = "redis://localhost:6379"
+    redis_url: str = ""
 
     # External APIs
     cryptopanic_api_key: str = ""
@@ -21,18 +21,20 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
 
     # SMTP
-    smtp_host: str = "smtp.gmail.com"
+    smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
 
-    # App
-    frontend_url: str = "http://localhost:5173"
-    cors_origins: str = "http://localhost:5173"
+    # App & CORS
+    frontend_url: str = ""
+    cors_origins: str = ""
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",")]
+        if not self.cors_origins:
+            return []
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 
 settings = Settings()

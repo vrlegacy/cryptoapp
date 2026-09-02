@@ -1,0 +1,69 @@
+import { config } from '@/config'
+
+export interface CoinData {
+  id: string
+  symbol: string
+  name: string
+  image?: string
+  is_binance_listed: boolean
+  current_price: number | null
+  market_cap: number | null
+  total_volume: number | null
+  price_change_percentage_24h: number | null
+  price_change_percentage_7d: number | null
+  price_change_percentage_30d: number | null
+  price_change_percentage_1y: number | null
+  price_change_percentage?: number | null
+  market_cap_rank: number | null
+  last_updated?: string | null
+}
+
+export interface AlertData {
+  id: string
+  coin_id: string
+  target_price: number
+  direction: 'above' | 'below'
+  channel: 'telegram' | 'email'
+  status: 'active' | 'triggered' | 'cancelled'
+  created_at: string
+  triggered_at?: string | null
+}
+
+export async function fetchCoins(binanceOnly: boolean = true, search: string = ''): Promise<CoinData[]> {
+  const url = new URL('/coins', config.backendUrl)
+  url.searchParams.set('binance_only', String(binanceOnly))
+  if (search) url.searchParams.set('search', search)
+
+  const res = await fetch(url.toString())
+  if (!res.ok) throw new Error(`Failed to fetch coins: ${res.statusText}`)
+  return res.json()
+}
+
+export async function fetchGainers(period: '30d' | '1y' = '30d', binanceOnly: boolean = true): Promise<CoinData[]> {
+  const url = new URL('/coins/gainers', config.backendUrl)
+  url.searchParams.set('period', period)
+  url.searchParams.set('binance_only', String(binanceOnly))
+
+  const res = await fetch(url.toString())
+  if (!res.ok) throw new Error(`Failed to fetch gainers: ${res.statusText}`)
+  return res.json()
+}
+
+export async function fetchTrending(method: 'pure' | 'volume_adjusted' = 'pure', binanceOnly: boolean = true): Promise<CoinData[]> {
+  const url = new URL('/coins/trending', config.backendUrl)
+  url.searchParams.set('method', method)
+  url.searchParams.set('binance_only', String(binanceOnly))
+
+  const res = await fetch(url.toString())
+  if (!res.ok) throw new Error(`Failed to fetch trending: ${res.statusText}`)
+  return res.json()
+}
+
+export async function fetchAlerts(getToken: () => Promise<string>): Promise<AlertData[]> {
+  const token = await getToken()
+  const res = await fetch(new URL('/alerts', config.backendUrl).toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`Failed to fetch alerts: ${res.statusText}`)
+  return res.json()
+}

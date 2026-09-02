@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
-from routers import health, users
+from routers import health, users, coins, alerts, watchlist
 
 app = FastAPI(
     title="CryptoApp API",
@@ -15,7 +15,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS — allow the Cloudflare Pages frontend (and local dev)
+# CORS — allow the Cloudflare Pages frontend (read strictly from env CORS_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -27,3 +27,6 @@ app.add_middleware(
 # Routers
 app.include_router(health.router)
 app.include_router(users.router)
+app.include_router(coins.router)
+app.include_router(alerts.router)
+app.include_router(watchlist.router)

@@ -31,9 +31,9 @@ cd cryptoapp
 
 # Frontend
 cd frontend
-cp ../.env.example .env.local    # fill in values
-npm install
-npm run dev
+cp .env.example .env.local    # fill in values
+pnpm install
+pnpm dev
 
 # Backend (new terminal)
 cd backend

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth0 } from '@auth0/auth0-react'
 import CoinIcon from './CoinIcon'
-import { fetchCoins, fetchWatchlist, toggleWatchlist, type CoinData } from '@/api/client'
+import { fetchCoins, fetchWatchlist, toggleWatchlist, forceSyncCoins, type CoinData } from '@/api/client'
 
 function formatPrice(price: number | null): string {
   if (price === null || price === undefined) return '—'
@@ -60,6 +60,13 @@ export default function MarketsView() {
     },
   })
 
+  const syncMutation = useMutation({
+    mutationFn: forceSyncCoins,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coins'] })
+    },
+  })
+
   // Client-side sorting
   const filtered = [...rawCoins].sort((a: CoinData, b: CoinData) => {
     if (sortBy === 'marketCap') return (b.market_cap ?? 0) - (a.market_cap ?? 0)
@@ -86,30 +93,53 @@ export default function MarketsView() {
             {filtered.length} coins · live backend data
           </p>
         </div>
-        <div
-          className="rounded-full p-1 flex text-sm"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-        >
+        <div className="flex gap-2 items-center">
           <button
-            onClick={() => setBinanceOnly(true)}
-            className="px-3 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer disabled:opacity-50"
             style={{
-              background: binanceOnly ? 'rgba(250,204,21,0.15)' : 'transparent',
-              color: binanceOnly ? '#facc15' : 'rgba(255,255,255,0.4)',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.7)',
             }}
           >
-            Binance
+            <svg
+              className={`w-3.5 h-3.5 ${syncMutation.isPending ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {syncMutation.isPending ? 'Syncing...' : 'Refresh'}
           </button>
-          <button
-            onClick={() => setBinanceOnly(false)}
-            className="px-3 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer"
-            style={{
-              background: !binanceOnly ? 'rgba(250,204,21,0.15)' : 'transparent',
-              color: !binanceOnly ? '#facc15' : 'rgba(255,255,255,0.4)',
-            }}
+          
+          <div
+            className="rounded-full p-1 flex text-sm"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
-            All
-          </button>
+            <button
+              onClick={() => setBinanceOnly(true)}
+              className="px-3 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer"
+              style={{
+                background: binanceOnly ? 'rgba(250,204,21,0.15)' : 'transparent',
+                color: binanceOnly ? '#facc15' : 'rgba(255,255,255,0.4)',
+              }}
+            >
+              Binance
+            </button>
+            <button
+              onClick={() => setBinanceOnly(false)}
+              className="px-3 py-1.5 rounded-full transition-all text-xs font-medium cursor-pointer"
+              style={{
+                background: !binanceOnly ? 'rgba(250,204,21,0.15)' : 'transparent',
+                color: !binanceOnly ? '#facc15' : 'rgba(255,255,255,0.4)',
+              }}
+            >
+              All
+            </button>
+          </div>
         </div>
       </div>
 

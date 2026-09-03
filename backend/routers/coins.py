@@ -1,6 +1,6 @@
 import math
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,8 +8,22 @@ from core.coingecko import coingecko_client
 from core.redis import get_json, set_json
 from db.database import get_db
 from db.models import Coin
+from schedulers.jobs import sync_coin_prices
 
 router = APIRouter(prefix="/coins", tags=["coins"])
+
+
+@router.post("/sync")
+async def force_sync_prices():
+    """
+    Manually forces a CoinGecko sync for prices and updates DB & Redis.
+    Called from frontend to refresh data instantly.
+    """
+    try:
+        await sync_coin_prices()
+        return {"status": "success", "message": "Market data synced successfully"}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(exc)}")
 
 
 @router.get("")

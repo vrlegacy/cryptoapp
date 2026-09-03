@@ -39,6 +39,13 @@ export async function fetchCoins(binanceOnly: boolean = true, search: string = '
   return res.json()
 }
 
+export async function forceSyncCoins(): Promise<{ status: string; message: string }> {
+  const url = new URL('/coins/sync', config.backendUrl)
+  const res = await fetch(url.toString(), { method: 'POST' })
+  if (!res.ok) throw new Error(`Failed to sync coins: ${res.statusText}`)
+  return res.json()
+}
+
 export async function fetchGainers(period: '30d' | '1y' = '30d', binanceOnly: boolean = true): Promise<CoinData[]> {
   const url = new URL('/coins/gainers', config.backendUrl)
   url.searchParams.set('period', period)
